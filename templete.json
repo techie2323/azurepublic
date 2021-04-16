@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "variables": {
+        "appInsightName": "[toLower(concat('appi-',parameters('appName')))]",
+        "logAnalyticsName": "[toLower(concat('la-',parameters('appName')))]",
+        "WebsiteName":"[toLower(concat('ws-',parameters('appName')))]"
+    },
+    "parameters": {
+      "appName": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "Virtual Network Name"
+        }
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "VNet-001",
+        "metadata": {
+          "description": "Virtual Network Name"
+        }
+      }
+
+    },
+    "resources": [
+        {
+            "type": "microsoft.insights/components",
+            "apiVersion": "2020-02-02-preview",
+            "name": "[variables('appInsightName')]",
+            "location": "[parameters('location')]",
+            "kind": "string",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('WebsiteName'))]",
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+            ],
+            "tags": {
+                "displayName": "AppInsight",
+                "ProjectName": "[parameters('appName')]"
+            },
+            "properties": {
+                "Application_Type": "web",
+                "applicationId": "[variables('appInsightName')]",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+            }
+        },
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2020-08-01",
+            "name": "[variables('logAnalyticsName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "Log Analytics",
+                "ProjectName": "[parameters('appName')]"
+            },
+            "properties": {
+                "sku": {
+                    "name": "pergb2018"
+                },
+                "retentionInDays": 120,
+                "features": {
+                    "searchVersion": 1,
+                    "legacy": 0,
+                    "enableLogAccessUsingOnlyResourcePermissions": true
+                }
+            }
+        }
+    ]
+}
